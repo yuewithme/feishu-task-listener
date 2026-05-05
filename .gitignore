@@ -1,0 +1,13 @@
+__pycache__/
+.venv-wechat/
+.tmp/
+tmp*/
+cmdout.txt
+cmderr.txt
+feishu_config.json
+*.pyc
+*.log
+events/
+processed_*.txt
+runtime_events.ndjson
+runtime_health.json

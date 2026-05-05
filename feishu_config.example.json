@@ -1,0 +1,13 @@
+{
+  "base_token": "YOUR_BASE_TOKEN",
+  "table_id": "YOUR_TABLE_ID",
+  "base_host": "https://your-tenant.feishu.cn",
+  "bot_creator_open_id": "YOUR_BOT_CREATOR_OPEN_ID",
+  "timezone": "Asia/Shanghai",
+  "structured_log_path": "events/automation.jsonl",
+  "health_path": "runtime_health.json",
+  "processed_message_path": "processed_message_ids.txt",
+  "processed_card_action_path": "processed_card_action_ids.txt",
+  "processed_alert_path": "processed_alert_ids.txt",
+  "raw_event_path": "runtime_events.ndjson"
+}

@@ -1,0 +1,22 @@
+{
+  "type": "select",
+  "name": "任务状态",
+  "multiple": false,
+  "options": [
+    {
+      "name": "待领取",
+      "hue": "Orange",
+      "lightness": "Lighter"
+    },
+    {
+      "name": "处理中",
+      "hue": "Blue",
+      "lightness": "Lighter"
+    },
+    {
+      "name": "已解决",
+      "hue": "Green",
+      "lightness": "Lighter"
+    }
+  ]
+}
