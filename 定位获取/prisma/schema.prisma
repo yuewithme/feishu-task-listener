@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model LocationRecord {
+  id        String   @id @default(cuid())
+  latitude  Float
+  longitude Float
+  accuracy  Float?
+  altitude  Float?
+  speed     Float?
+  heading   Float?
+  userAgent String?
+  ipHash    String?
+  source    String?
+  createdAt DateTime @default(now())
+}
