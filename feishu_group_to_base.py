@@ -378,6 +378,7 @@ def handle_card_action_event(
                         action,
                         action["record_id"],
                         disabled_actions=disabled_actions,
+                        location_fill_action=action["action"],
                     ),
                     lark_cli=lark_cli,
                 )
@@ -708,6 +709,7 @@ def build_task_card(
     record: dict[str, Any],
     record_id: str,
     disabled_actions: set[str] | None = None,
+    location_fill_action: str | None = None,
 ) -> dict[str, Any]:
     disabled_actions = disabled_actions or set()
     task_types = record.get("任务类型") or []
@@ -753,6 +755,23 @@ def build_task_card(
         claim_button["disabled"] = True
     if "resolve" in disabled_actions:
         resolve_button["disabled"] = True
+    actions = [
+        claim_button,
+        resolve_button,
+    ]
+
+    location_hint = ""
+    if location_fill_action:
+        location_label = location_fill_label(location_fill_action)
+        location_hint = f"\n**位置填写：** 请打开对应记录填写{location_label}"
+        actions.append(
+            {
+                "tag": "button",
+                "text": {"tag": "plain_text", "content": f"填写{location_label}"},
+                "type": "default",
+                "url": build_base_record_url(record_id),
+            }
+        )
 
     return {
         "config": {"wide_screen_mode": True, "update_multi": True},
@@ -772,14 +791,12 @@ def build_task_card(
                     f"**车牌号：** {vehicle}\n"
                     f"**消息原文：** {original}\n"
                     f"**来源表格：** [查看表格]({source_table_url})"
+                    f"{location_hint}"
                 ),
             },
             {
                 "tag": "action",
-                "actions": [
-                    claim_button,
-                    resolve_button,
-                ],
+                "actions": actions,
             },
         ],
     }
@@ -809,6 +826,18 @@ def _button_value(
 
 def build_base_table_url() -> str:
     return f"{BASE_HOST}/base/{BASE_TOKEN}?table={TABLE_ID}"
+
+
+def build_base_record_url(record_id: str) -> str:
+    return f"{build_base_table_url()}&record={record_id}"
+
+
+def location_fill_label(action: str) -> str:
+    if action == "claim":
+        return "出发位置"
+    if action == "resolve":
+        return "救援结束位置"
+    raise ValueError(f"Unsupported location fill action: {action}")
 
 
 def parse_card_action(event: dict[str, Any]) -> dict[str, str] | None:

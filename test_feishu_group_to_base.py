@@ -8,6 +8,7 @@ from feishu_group_to_base import (
     TABLE_ID,
     alert_creator,
     build_creator_alert_card,
+    build_base_record_url,
     build_base_table_url,
     build_user_authorization_alert_reason,
     build_task_card,
@@ -124,6 +125,46 @@ class ParseEventTests(unittest.TestCase):
         self.assertEqual(actions[0]["text"]["content"], "领取任务")
         self.assertEqual(actions[0]["disabled"], True)
         self.assertNotIn("disabled", actions[1])
+
+    def test_builds_card_with_departure_location_link_after_claim(self):
+        record = {
+            "消息原文": "@救援工单 @陈福艳 0412救援，换电",
+            "车牌号": "0412",
+            "任务类型": ["救援", "换电"],
+            "任务发布时间": "2026-05-05 01:58:52",
+        }
+
+        card = build_task_card(
+            record,
+            "rec_123",
+            disabled_actions={"claim"},
+            location_fill_action="claim",
+        )
+
+        actions = card["elements"][1]["actions"]
+        self.assertEqual(actions[2]["text"]["content"], "填写出发位置")
+        self.assertEqual(actions[2]["url"], build_base_record_url("rec_123"))
+        self.assertIn("请打开对应记录填写出发位置", card["elements"][0]["content"])
+
+    def test_builds_card_with_rescue_end_location_link_after_resolve(self):
+        record = {
+            "消息原文": "@救援工单 @陈福艳 0412救援，换电",
+            "车牌号": "0412",
+            "任务类型": ["救援", "换电"],
+            "任务发布时间": "2026-05-05 01:58:52",
+        }
+
+        card = build_task_card(
+            record,
+            "rec_123",
+            disabled_actions={"claim", "resolve"},
+            location_fill_action="resolve",
+        )
+
+        actions = card["elements"][1]["actions"]
+        self.assertEqual(actions[2]["text"]["content"], "填写救援结束位置")
+        self.assertEqual(actions[2]["url"], build_base_record_url("rec_123"))
+        self.assertIn("请打开对应记录填写救援结束位置", card["elements"][0]["content"])
 
     def test_parses_card_action_value(self):
         event = {
@@ -395,6 +436,12 @@ class ParseEventTests(unittest.TestCase):
         self.assertEqual(
             build_base_table_url(),
             f"{BASE_HOST}/base/{BASE_TOKEN}?table={TABLE_ID}",
+        )
+
+    def test_builds_base_record_url_from_write_target(self):
+        self.assertEqual(
+            build_base_record_url("rec_123"),
+            f"{BASE_HOST}/base/{BASE_TOKEN}?table={TABLE_ID}&record=rec_123",
         )
 
     @patch("feishu_group_to_base.subprocess.run")
