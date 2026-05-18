@@ -57,3 +57,18 @@ python feishu_group_to_base.py --status
 ## 安全
 
 仓库只提交 `feishu_config.example.json`，不会提交真实 Base Token、Table ID、Open ID、日志和处理状态文件。
+
+## GitHub Pages 展示页
+
+仓库内置了一个纯静态展示页，用来说明统一入口和群工单工作流：
+
+```text
+docs/index.html
+docs/site.css
+```
+
+如果要在 GitHub 上启用展示页：
+
+```text
+Settings -> Pages -> Deploy from a branch -> main -> /docs
+```

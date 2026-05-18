@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Feishu Automation Hub</title>
+    <meta
+      name="description"
+      content="展示飞书统一自动化监听器如何接收群工单、写入多维表格、私发任务卡片，并扩展到洗车通知流程。"
+    >
+    <link rel="stylesheet" href="./site.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">GitHub Pages</p>
+          <h1>Feishu Automation Hub</h1>
+          <p class="hero-text">
+            一个围绕飞书事件订阅构建的自动化入口。它接收群聊工单消息，解析负责人和任务类型，写入多维表格，
+            私发可交互任务卡片，并在异常时把处理信息回送给机器人创建者。
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="../README.md">查看项目说明</a>
+            <a class="button secondary" href="../feishu_automation_hub.py">查看统一入口脚本</a>
+          </div>
+        </div>
+        <section class="hero-panel">
+          <div class="panel-header">
+            <span class="panel-dot"></span>
+            <span>统一事件入口</span>
+          </div>
+          <div class="route-stack">
+            <div class="route-card">
+              <div class="route-label">输入事件</div>
+              <div class="route-value">im.message.receive_v1</div>
+              <div class="route-value">card.action.trigger</div>
+              <div class="route-value">drive.file.bitable_record_changed_v1</div>
+            </div>
+            <div class="route-arrow" aria-hidden="true"></div>
+            <div class="route-card">
+              <div class="route-label">路由脚本</div>
+              <div class="route-value mono">feishu_automation_hub.py</div>
+            </div>
+            <div class="route-arrow" aria-hidden="true"></div>
+            <div class="route-grid">
+              <div class="route-mini">
+                <span class="mini-tag">群工单</span>
+                <strong>claim / resolve</strong>
+              </div>
+              <div class="route-mini">
+                <span class="mini-tag">洗车通知</span>
+                <strong>accept / done</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </header>
+
+      <main>
+        <section class="section">
+          <div class="section-head">
+            <p class="eyebrow">Core Workflow</p>
+            <h2>群工单主流程</h2>
+            <p>
+              页面重点不是列功能，而是让人一眼看懂消息从进入飞书到落表、发卡、回写状态的全过程。
+            </p>
+          </div>
+
+          <div class="workflow-grid">
+            <article class="workflow-step">
+              <span class="step-index">01</span>
+              <h3>群消息进入</h3>
+              <p>机器人只处理明确 <code>@机器人</code> 的消息，普通聊天消息会被跳过。</p>
+              <ul class="detail-list">
+                <li><code>im.message.receive_v1</code></li>
+                <li>去重 message_id</li>
+                <li>过滤未 @ bot 的消息</li>
+              </ul>
+            </article>
+
+            <article class="workflow-step">
+              <span class="step-index">02</span>
+              <h3>解析任务字段</h3>
+              <p>从消息文本和 mention 结构里提取执行人、任务类型、发布时间和可选车牌号。</p>
+              <ul class="detail-list">
+                <li>执行人来自第一位 user mention</li>
+                <li>任务类型基于关键词映射</li>
+                <li>车牌号允许为空</li>
+              </ul>
+            </article>
+
+            <article class="workflow-step">
+              <span class="step-index">03</span>
+              <h3>写入多维表格</h3>
+              <p>将结构化记录写入 Base，并保留原始消息文本，方便后续追溯和人工补录。</p>
+              <ul class="detail-list">
+                <li><code>任务发布时间</code></li>
+                <li><code>执行人</code></li>
+                <li><code>任务类型</code></li>
+                <li><code>消息原文</code></li>
+              </ul>
+            </article>
+
+            <article class="workflow-step">
+              <span class="step-index">04</span>
+              <h3>私发任务卡片</h3>
+              <p>向执行人私发卡片，包含领取任务、已解决、跳转记录补位置等交互入口。</p>
+              <ul class="detail-list">
+                <li>发送身份：bot</li>
+                <li>目标：执行人 open_id</li>
+                <li>卡片支持 update_multi</li>
+              </ul>
+            </article>
+
+            <article class="workflow-step">
+              <span class="step-index">05</span>
+              <h3>按钮回写状态</h3>
+              <p>点击后回写领取时间或解决时间，并更新卡片按钮状态，防止重复点击。</p>
+              <ul class="detail-list">
+                <li><code>claim</code> → 处理中</li>
+                <li><code>resolve</code> → 已解决</li>
+                <li>追加填写位置的跳转按钮</li>
+              </ul>
+            </article>
+
+            <article class="workflow-step warning">
+              <span class="step-index">06</span>
+              <h3>异常处理</h3>
+              <p>发送失败、字段缺失、用户授权失效时，统一给机器人创建者发送异常处理卡片。</p>
+              <ul class="detail-list">
+                <li>群聊名称</li>
+                <li>消息原文</li>
+                <li>失败原因</li>
+                <li>目标执行人身份信息</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <p class="eyebrow">Routing Map</p>
+            <h2>统一入口如何分流</h2>
+            <p>项目不是单一脚本，而是一个飞书自动化入口，按事件类型和按钮 action 分发到不同业务模块。</p>
+          </div>
+
+          <div class="lanes">
+            <article class="lane">
+              <div class="lane-header">
+                <h3>事件订阅层</h3>
+                <span class="lane-meta mono">lark-cli event +subscribe</span>
+              </div>
+              <div class="lane-items">
+                <div class="lane-item">群消息事件</div>
+                <div class="lane-item">卡片动作事件</div>
+                <div class="lane-item">多维表格记录变更事件</div>
+              </div>
+            </article>
+
+            <article class="lane">
+              <div class="lane-header">
+                <h3>Hub 路由层</h3>
+                <span class="lane-meta mono">feishu_automation_hub.py</span>
+              </div>
+              <div class="lane-items split">
+                <div class="lane-item strong">群工单模块</div>
+                <div class="lane-item strong">洗车通知模块</div>
+              </div>
+            </article>
+
+            <article class="lane">
+              <div class="lane-header">
+                <h3>业务结果层</h3>
+                <span class="lane-meta">结构化输出</span>
+              </div>
+              <div class="lane-items split">
+                <div class="lane-item">Base 记录 + 私发任务卡片 + 异常提醒</div>
+                <div class="lane-item">表格新增记录提醒 + 卡片状态回写</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <p class="eyebrow">Repository Map</p>
+            <h2>关键文件</h2>
+            <p>把入口、路由和各业务脚本拆开，便于定位责任边界。</p>
+          </div>
+
+          <div class="file-grid">
+            <a class="file-card" href="../feishu_automation_hub.py">
+              <span class="file-name">feishu_automation_hub.py</span>
+              <span class="file-role">统一入口，负责事件订阅和业务分流</span>
+            </a>
+            <a class="file-card" href="../feishu_group_to_base.py">
+              <span class="file-name">feishu_group_to_base.py</span>
+              <span class="file-role">群工单解析、写表、私发卡片、异常处理</span>
+            </a>
+            <a class="file-card" href="../feishu_car_wash_notifier/car_wash_notifier.py">
+              <span class="file-name">car_wash_notifier.py</span>
+              <span class="file-role">洗车提醒场景的记录监听和卡片交互</span>
+            </a>
+            <a class="file-card" href="../test_feishu_group_to_base.py">
+              <span class="file-name">test_feishu_group_to_base.py</span>
+              <span class="file-role">群工单主流程和异常路径测试</span>
+            </a>
+            <a class="file-card" href="../task_types.json">
+              <span class="file-name">task_types.json</span>
+              <span class="file-role">任务类型和同义词映射配置</span>
+            </a>
+            <a class="file-card" href="../feishu_config.example.json">
+              <span class="file-name">feishu_config.example.json</span>
+              <span class="file-role">示例配置，不包含真实 token 和 open_id</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="section compact">
+          <div class="section-head">
+            <p class="eyebrow">Deployment</p>
+            <h2>GitHub Pages 使用方式</h2>
+          </div>
+          <div class="deploy-panel">
+            <p>仓库设置里把 GitHub Pages 源切到 <code>main</code> 分支的 <code>/docs</code> 目录即可。</p>
+            <p class="mono">Settings → Pages → Deploy from a branch → main / docs</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
